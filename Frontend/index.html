@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .role-selector-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--negro);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .role-card {
+            border: 2px solid #e0e8f4;
+            background: white;
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .role-card:hover {
+            border-color: var(--azul-claro);
+            background: #f7faff;
+            transform: translateY(-2px);
+        }
+        .role-card.active {
+            border-color: var(--azul-salud);
+            background: var(--azul-suave);
+            box-shadow: 0 4px 12px rgba(26, 74, 139, 0.15);
+        }
+        .role-icon {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+        .role-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--negro);
+        }
+        .role-subtitle {
+            font-size: 11px;
+            color: var(--gris-texto);
+            margin-top: 3px;
+        }
+        .role-check {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: var(--azul-salud);
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .role-card.active .role-check {
+            display: flex;
+        }
+        .demo-notice {
+            background: #eef7ee;
+            border: 1px solid #c2e2c2;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #1a6b4a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .quick-access-label {
+            font-size: 12px;
+            color: var(--gris-texto);
+            margin-top: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+            position: relative;
+        }
+        .quick-access-label::before,
+        .quick-access-label::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 25%;
+            height: 1px;
+            background: #e0e8f4;
+        }
+        .quick-access-label::before { left: 0; }
+        .quick-access-label::after { right: 0; }
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .btn-quick {
+            background: white;
+            border: 1.5px solid #d5e0f0;
+            border-radius: 8px;
+            padding: 9px 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--azul-salud);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-quick:hover {
+            border-color: var(--azul-salud);
+            background: var(--azul-suave);
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+
+    <div class="auth-panel-left">
+        <div class="auth-logo">
+            <div class="auth-logo-icon">🏥</div>
+            <div class="auth-logo-text">
+                Centro de Salud<br>
+                <strong>Nuestra Señora del Carmen</strong>
+            </div>
+        </div>
+
+        <h1 class="auth-hero-title">
+            Tu salud,<br>
+            <em>sin filas</em><br>
+            y desde casa.
+        </h1>
+
+        <p class="auth-hero-subtitle">
+            Agenda tu cita médica en minutos desde cualquier dispositivo.
+            Pensado para las comunidades de La Tola, Nariño.
+        </p>
+
+        <div class="auth-features">
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Agenda citas sin desplazarte al centro de salud
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Recibe recordatorios antes de tu cita
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Cancela o reprograma cuando lo necesites
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Gestión médica y administrativa completa
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-panel-right">
+        <div class="auth-form-container">
+
+            <div class="auth-form-header">
+                <h2 class="auth-form-title">Bienvenido al Sistema</h2>
+                <p class="auth-form-subtitle">
+                    ¿Quieres registrar nuevos datos?
+                    <a href="/registro">Regístrate aquí</a>
+                </p>
+            </div>
+
+            <div class="demo-notice">
+                <span>🔓</span>
+                <span><strong>Acceso libre (sin contraseña):</strong> Elige el rol con el que deseas ingresar a la plataforma.</span>
+            </div>
+
+            <div class="alert alert-error" id="alerta">
+                <span>⚠️</span>
+                <span id="alerta-texto"></span>
+            </div>
+
+            <form id="form-login" novalidate>
+
+                <div class="form-group">
+                    <label class="role-selector-label">Selecciona tu Rol de Acceso <span class="obligatorio">*</span></label>
+                    <div class="role-cards" id="role-cards">
+                        <div class="role-card active" data-rol="paciente">
+                            <span class="role-check">✓</span>
+                            <div class="role-icon">👤</div>
+                            <div class="role-title">Paciente</div>
+                            <div class="role-subtitle">Agendar citas</div>
+                        </div>
+                        <div class="role-card" data-rol="medico">
+                            <span class="role-check">✓</span>
+                            <div class="role-icon">🩺</div>
+                            <div class="role-title">Médico</div>
+                            <div class="role-subtitle">Ver agenda</div>
+                        </div>
+                        <div class="role-card" data-rol="administrador">
+                            <span class="role-check">✓</span>
+                            <div class="role-icon">⚙️</div>
+                            <div class="role-title">Admin</div>
+                            <div class="role-subtitle">Gestión total</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="correo">Correo o Nombre (Opcional)</label>
+                    <input
+                        type="text"
+                        id="correo"
+                        name="correo"
+                        class="form-input"
+                        placeholder="ej: maria.gomez@gmail.com o déjalo vacío"
+                    >
+                    <span class="field-error" id="error-correo"></span>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btn-login">
+                    <span class="btn-text" id="btn-text">Ingresar como Paciente</span>
+                    <div class="spinner"></div>
+                </button>
+
+            </form>
+
+            <div class="quick-access-label">O accede con un clic rápido</div>
+
+            <div class="quick-buttons">
+                <button type="button" class="btn-quick" data-quick="paciente">
+                    <span>👤</span>
+                    <span>Paciente Demo</span>
+                </button>
+                <button type="button" class="btn-quick" data-quick="medico">
+                    <span>🩺</span>
+                    <span>Médico Demo</span>
+                </button>
+                <button type="button" class="btn-quick" data-quick="administrador">
+                    <span>⚙️</span>
+                    <span>Admin Demo</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="js/login.js"></script>
+</body>
+</html>

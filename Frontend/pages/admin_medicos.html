@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Médicos | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body { background: var(--gris-claro); }
+        .header {
+            background: var(--azul-salud);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-logo { color: white; font-family: 'DM Serif Display', serif; font-size: 18px; }
+        .btn-volver {
+            background: rgba(255,255,255,0.15);
+            color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s; text-decoration: none;
+            display: inline-block;
+        }
+        .btn-volver:hover { background: rgba(255,255,255,0.25); }
+        .page-body { padding: 40px; max-width: 900px; margin: 0 auto; }
+        .page-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 32px;
+        }
+        .page-title { font-family: 'DM Serif Display', serif; font-size: 28px; }
+        .btn-nuevo {
+            background: var(--azul-salud); color: white;
+            border: none; padding: 10px 20px; border-radius: 8px;
+            cursor: pointer; font-size: 14px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .btn-nuevo:hover { background: var(--azul-claro); }
+        .tabla-container {
+            background: white; border-radius: 14px;
+            box-shadow: var(--sombra); overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--azul-suave); }
+        th {
+            padding: 14px 20px; text-align: left;
+            font-size: 12px; font-weight: 600;
+            color: var(--azul-salud); text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        td { padding: 14px 20px; font-size: 14px; border-bottom: 1px solid #f0f4f8; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafcff; }
+        .btn-horarios {
+            padding: 6px 12px; border: 1.5px solid var(--azul-salud);
+            color: var(--azul-salud); background: white; border-radius: 6px;
+            cursor: pointer; font-size: 12px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+            margin-right: 6px;
+        }
+        .btn-horarios:hover { background: var(--azul-salud); color: white; }
+        .btn-eliminar {
+            padding: 6px 12px; border: 1.5px solid var(--rojo-error);
+            color: var(--rojo-error); background: white; border-radius: 6px;
+            cursor: pointer; font-size: 12px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .btn-eliminar:hover { background: var(--rojo-error); color: white; }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal {
+            background: white; border-radius: 14px; padding: 32px;
+            max-width: 500px; width: 90%; box-shadow: var(--sombra-hover);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 20px; }
+        .modal-acciones { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-secundario {
+            flex: 1; padding: 12px; border: 1.5px solid #d0d9e8;
+            background: white; border-radius: 8px; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+        }
+        .horario-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: var(--gris-claro);
+            border-radius: 8px; margin-bottom: 8px; font-size: 13px;
+        }
+        .horario-dia { font-weight: 600; text-transform: capitalize; color: var(--azul-salud); }
+        .btn-eliminar-horario {
+            background: none; border: none; cursor: pointer;
+            color: var(--rojo-error); font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-logo">🏥 Centro de Salud La Tola</div>
+    <a href="/dashboard" class="btn-volver">← Volver</a>
+</header>
+
+<main class="page-body">
+    <div class="page-header">
+        <h1 class="page-title">Gestionar Médicos</h1>
+        <button class="btn-nuevo" onclick="abrirModalNuevoMedico()">+ Nuevo médico</button>
+    </div>
+
+    <div class="alert alert-success" id="alerta-ok" style="margin-bottom:20px;">
+        <span>✅</span><span id="alerta-ok-texto"></span>
+    </div>
+    <div class="alert alert-error" id="alerta-error" style="margin-bottom:20px;">
+        <span>⚠️</span><span id="alerta-error-texto"></span>
+    </div>
+
+    <div class="tabla-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Especialidad</th>
+                    <th>Registro</th>
+                    <th>Correo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-medicos">
+                <tr><td colspan="5" style="text-align:center;color:var(--gris-texto);">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Modal nuevo médico -->
+<div class="modal-overlay" id="modal-medico">
+    <div class="modal">
+        <div class="modal-title">Nuevo médico</div>
+        <div class="alert alert-error" id="alerta-modal">
+            <span>⚠️</span><span id="alerta-modal-texto"></span>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nombre *</label>
+                <input type="text" id="m-nombre" class="form-input" placeholder="Juan">
+            </div>
+            <div class="form-group">
+                <label>Apellido *</label>
+                <input type="text" id="m-apellido" class="form-input" placeholder="Pérez">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tipo documento</label>
+                <select id="m-tipo_doc" class="form-input">
+                    <option value="CC">Cédula</option>
+                    <option value="CE">Cédula Extranjería</option>
+                    <option value="PA">Pasaporte</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Número documento</label>
+                <input type="text" id="m-num_doc" class="form-input" placeholder="12345678">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Correo *</label>
+            <input type="email" id="m-correo" class="form-input" placeholder="medico@saludlatola.gov.co">
+        </div>
+        <div class="form-group">
+            <label>Contraseña *</label>
+            <input type="password" id="m-contrasena" class="form-input" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Especialidad *</label>
+                <input type="text" id="m-especialidad" class="form-input" placeholder="Medicina General">
+            </div>
+            <div class="form-group">
+                <label>Registro médico *</label>
+                <input type="text" id="m-registro" class="form-input" placeholder="MED-001">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" id="m-telefono" class="form-input" placeholder="3001234567">
+        </div>
+        <div class="modal-acciones">
+            <button class="btn-secundario" onclick="cerrarModal('modal-medico')">Cancelar</button>
+            <button class="btn-primary" id="btn-guardar-medico" style="flex:1;">
+                <span class="btn-text">Guardar médico</span>
+                <div class="spinner"></div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal horarios -->
+<div class="modal-overlay" id="modal-horarios">
+    <div class="modal">
+        <div class="modal-title">Horarios del médico</div>
+        <div id="lista-horarios" style="margin-bottom:20px;"></div>
+        <div style="border-top:1.5px solid #e8eef8;padding-top:20px;">
+            <p style="font-weight:600;font-size:14px;margin-bottom:14px;">Agregar nuevo horario:</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Día</label>
+                    <select id="h-dia" class="form-input">
+                        <option value="lunes">Lunes</option>
+                        <option value="martes">Martes</option>
+                        <option value="miercoles">Miércoles</option>
+                        <option value="jueves">Jueves</option>
+                        <option value="viernes">Viernes</option>
+                        <option value="sabado">Sábado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Hora inicio</label>
+                    <input type="time" id="h-inicio" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>Hora fin</label>
+                    <input type="time" id="h-fin" class="form-input">
+                </div>
+            </div>
+            <button class="btn-primary" id="btn-agregar-horario">+ Agregar horario</button>
+        </div>
+        <div class="modal-acciones">
+            <button class="btn-secundario" onclick="cerrarModal('modal-horarios')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+    if (!token || (usuario?.rol !== 'administrador' && usuario?.rol !== 'medico')) window.location.href = '/';
+
+    let medicoActual = null;
+
+    async function cargarMedicos() {
+        try {
+            const res = await fetch('/api/admin/medicos', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const tbody = document.getElementById('tabla-medicos');
+
+            if (data.medicos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gris-texto);padding:30px;">No hay médicos registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.medicos.map(m => `
+                <tr>
+                    <td><strong>Dr. ${m.nombre} ${m.apellido}</strong></td>
+                    <td>${m.especialidad}</td>
+                    <td>${m.registro_medico}</td>
+                    <td>${m.correo}</td>
+                    <td>
+                        <button class="btn-horarios" onclick="abrirHorarios(${m.id_medico})">🕐 Horarios</button>
+                        <button class="btn-eliminar" onclick="eliminarMedico(${m.id_medico})">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    function abrirModalNuevoMedico() {
+        document.getElementById('modal-medico').classList.add('visible');
+    }
+
+    function cerrarModal(id) {
+        document.getElementById(id).classList.remove('visible');
+    }
+
+    document.getElementById('btn-guardar-medico').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-guardar-medico');
+        btn.classList.add('loading'); btn.disabled = true;
+
+        const datos = {
+            nombre: document.getElementById('m-nombre').value.trim(),
+            apellido: document.getElementById('m-apellido').value.trim(),
+            tipo_documento: document.getElementById('m-tipo_doc').value,
+            numero_documento: document.getElementById('m-num_doc').value.trim(),
+            correo: document.getElementById('m-correo').value.trim(),
+            contrasena: document.getElementById('m-contrasena').value,
+            especialidad: document.getElementById('m-especialidad').value.trim(),
+            registro_medico: document.getElementById('m-registro').value.trim(),
+            telefono: document.getElementById('m-telefono').value.trim(),
+        };
+
+        try {
+            const res = await fetch('/api/admin/medicos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(datos)
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                document.getElementById('alerta-modal').className = 'alert alert-error visible';
+                document.getElementById('alerta-modal-texto').textContent = data.error;
+                return;
+            }
+
+            cerrarModal('modal-medico');
+            document.getElementById('alerta-ok').className = 'alert alert-success visible';
+            document.getElementById('alerta-ok-texto').textContent = 'Médico creado exitosamente.';
+            cargarMedicos();
+        } catch (e) { console.error(e); }
+        finally { btn.classList.remove('loading'); btn.disabled = false; }
+    });
+
+    async function eliminarMedico(id) {
+        if (!confirm('¿Deseas desactivar este médico?')) return;
+        try {
+            const res = await fetch(`/api/admin/medicos/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                document.getElementById('alerta-ok').className = 'alert alert-success visible';
+                document.getElementById('alerta-ok-texto').textContent = data.mensaje;
+                cargarMedicos();
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function abrirHorarios(id_medico) {
+        medicoActual = id_medico;
+        document.getElementById('modal-horarios').classList.add('visible');
+        await cargarHorarios();
+    }
+
+    async function cargarHorarios() {
+        try {
+            const res = await fetch(`/api/admin/horarios/${medicoActual}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const lista = document.getElementById('lista-horarios');
+
+            if (data.horarios.length === 0) {
+                lista.innerHTML = '<p style="color:var(--gris-texto);font-size:13px;">No hay horarios registrados.</p>';
+                return;
+            }
+
+            lista.innerHTML = data.horarios.map(h => `
+                <div class="horario-item">
+                    <div>
+                        <span class="horario-dia">${h.dia_semana}</span>
+                        &nbsp;${h.hora_inicio.substring(0,5)} - ${h.hora_fin.substring(0,5)}
+                    </div>
+                    <button class="btn-eliminar-horario" onclick="eliminarHorario(${h.id_horario})">🗑️</button>
+                </div>
+            `).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('btn-agregar-horario').addEventListener('click', async () => {
+        const dia = document.getElementById('h-dia').value;
+        const inicio = document.getElementById('h-inicio').value;
+        const fin = document.getElementById('h-fin').value;
+
+        if (!inicio || !fin) { alert('Ingresa hora de inicio y fin.'); return; }
+
+        try {
+            const res = await fetch('/api/admin/horarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ id_medico: medicoActual, dia_semana: dia, hora_inicio: inicio, hora_fin: fin })
+            });
+            const data = await res.json();
+            if (res.ok) cargarHorarios();
+            else alert(data.error);
+        } catch (e) { console.error(e); }
+    });
+
+    async function eliminarHorario(id) {
+        if (!confirm('¿Eliminar este horario?')) return;
+        try {
+            await fetch(`/api/admin/horarios/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            cargarHorarios();
+        } catch (e) { console.error(e); }
+    }
+
+    cargarMedicos();
+</script>
+</body>
+</html>

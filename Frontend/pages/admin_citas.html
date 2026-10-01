@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Citas y Reportes | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body { background: var(--gris-claro); }
+        .header {
+            background: var(--azul-salud);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-logo { color: white; font-family: 'DM Serif Display', serif; font-size: 18px; }
+        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-volver {
+            background: rgba(255,255,255,0.15);
+            color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s; text-decoration: none;
+            display: inline-block;
+        }
+        .btn-volver:hover { background: rgba(255,255,255,0.25); }
+        .page-body { padding: 40px; max-width: 1100px; margin: 0 auto; }
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+        }
+        .page-title { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 4px; }
+        .page-subtitle { color: var(--gris-texto); font-size: 14px; }
+        .toolbar-buttons { display: flex; gap: 10px; }
+        .btn-tool {
+            background: white; border: 1.5px solid #d0d9e8;
+            border-radius: 8px; padding: 8px 14px; font-size: 13px;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;
+            color: var(--azul-salud); transition: all 0.2s;
+        }
+        .btn-tool:hover {
+            background: var(--azul-suave); border-color: var(--azul-salud);
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px; margin-bottom: 28px;
+        }
+        .stat-card {
+            background: white; border-radius: 12px; padding: 20px;
+            box-shadow: var(--sombra); border-top: 3px solid var(--azul-salud);
+        }
+        .stat-card.inasistencia { border-top-color: var(--amarillo-aviso); }
+        .stat-card.atendida { border-top-color: #2d9768; }
+        .stat-card.cancelada { border-top-color: var(--rojo-error); }
+        .stat-card.confirmada { border-top-color: #0d9488; }
+        .stat-numero { font-size: 26px; font-weight: 700; color: var(--negro); margin-bottom: 4px; }
+        .stat-label { font-size: 12px; color: var(--gris-texto); }
+        .stat-sub { font-size: 11px; color: var(--gris-texto); margin-top: 2px; }
+
+        /* Módulo de Recepción (Asistente Administrativo) */
+        .reception-box {
+            background: white; border-radius: 12px; padding: 20px 24px;
+            box-shadow: var(--sombra); margin-bottom: 24px;
+            border-left: 4px solid #0d9488;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 16px;
+        }
+        .reception-info h3 { font-size: 15px; font-weight: 600; color: #0f766e; margin-bottom: 2px; }
+        .reception-info p { font-size: 12px; color: var(--gris-texto); }
+        .reception-form { display: flex; gap: 10px; align-items: center; }
+        .reception-input {
+            padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px;
+            font-size: 13px; width: 220px; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-confirm-llegada {
+            background: #0d9488; color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-confirm-llegada:hover { background: #0f766e; }
+
+        /* Filtros */
+        .filtros {
+            background: white; border-radius: 12px; padding: 20px;
+            margin-bottom: 24px; box-shadow: var(--sombra);
+            display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+        }
+        .filtros .form-group { margin-bottom: 0; min-width: 170px; flex: 1; }
+        .filtros label { font-size: 12px; font-weight: 600; margin-bottom: 6px; display: block; }
+        .tabla-container {
+            background: white; border-radius: 12px;
+            box-shadow: var(--sombra); overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th {
+            background: #f8fafc; padding: 14px 16px; text-align: left;
+            font-weight: 600; color: var(--negro); border-bottom: 1.5px solid #e2e8f0;
+        }
+        td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        tr:hover { background: #f8fafc; }
+        .badge-estado {
+            display: inline-block; padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; text-transform: capitalize;
+        }
+        .badge-programada { background: var(--azul-suave); color: var(--azul-salud); }
+        .badge-confirmada { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+        .badge-atendida { background: #e8f5ee; color: #1a6b4a; }
+        .badge-cancelada { background: #fff0f0; color: var(--rojo-error); }
+        .badge-inasistencia { background: #fff8e8; color: var(--amarillo-aviso); }
+        .btn-estado {
+            padding: 6px 10px; border: 1.5px solid #d0d9e8;
+            background: white; border-radius: 6px; cursor: pointer;
+            font-size: 11px; font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s; outline: none;
+        }
+        .btn-estado:hover { background: var(--azul-suave); border-color: var(--azul-salud); }
+
+        /* Estilos de Impresión (Reporte Oficial) */
+        @media print {
+            .header, .toolbar-buttons, .filtros, .reception-box, .btn-estado, .btn-volver { display: none !important; }
+            body { background: white; color: black; padding: 0; }
+            .page-body { max-width: 100%; padding: 0; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 24px; border-bottom: 2px solid #333; padding-bottom: 12px; }
+            .tabla-container { box-shadow: none; border: 1px solid #ccc; }
+            th, td { border: 1px solid #ddd; padding: 8px; font-size: 11px; }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-logo">🏥 Centro de Salud La Tola</div>
+    <div class="header-actions">
+        <a href="/dashboard" class="btn-volver">← Volver al Dashboard</a>
+    </div>
+</header>
+
+<main class="page-body">
+
+    <!-- Membrete visible al imprimir en PDF -->
+    <div class="print-header">
+        <h2 style="margin:0; font-size:18px;">CENTRO DE SALUD NUESTRA SEÑORA DEL CARMEN</h2>
+        <p style="margin:4px 0; font-size:13px;">E.S.E. Municipio de La Tola - Nariño</p>
+        <h3 style="margin:6px 0; font-size:15px; color:#1a4a8b;">INFORME OFICIAL DE GESTIÓN Y ASIGNACIÓN DE CITAS MÉDICAS</h3>
+        <p style="margin:0; font-size:11px; color:#555;" id="print-fecha-generacion"></p>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Gestión de Citas y Reportes</h1>
+            <p class="page-subtitle">Monitoreo operativo, control de asistencia presencial y reportes estadísticos.</p>
+        </div>
+        <div class="toolbar-buttons">
+            <button class="btn-tool" onclick="exportarExcel()">
+                <span>📊</span> Exportar a Excel
+            </button>
+            <button class="btn-tool" onclick="exportarPDF()">
+                <span>🖨️</span> Imprimir / Reporte PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Módulo de Recepción (Asistente Administrativo - Diagrama de Secuencia) -->
+    <div class="reception-box">
+        <div class="reception-info">
+            <h3>🏢 Recepción en Sede Física (Control de Asistencia)</h3>
+            <p>Registra la llegada del paciente con su documento para confirmar su presencia en sala de espera.</p>
+        </div>
+        <form class="reception-form" id="form-reception" onsubmit="confirmarLlegadaPaciente(event)">
+            <input type="text" id="input-doc-llegada" class="reception-input" placeholder="Número de Documento / Cédula" required>
+            <button type="submit" class="btn-confirm-llegada">Confirmar Llegada</button>
+        </form>
+    </div>
+
+    <!-- Indicadores Clave de Desempeño (KPIs) -->
+    <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+            <div class="stat-numero" id="stat-total">-</div>
+            <div class="stat-label">Total Citas Registradas</div>
+            <div class="stat-sub">Volumen global</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-numero" id="stat-programadas">-</div>
+            <div class="stat-label">Citas Programadas</div>
+            <div class="stat-sub">Por atender</div>
+        </div>
+        <div class="stat-card confirmada">
+            <div class="stat-numero" id="stat-confirmadas" style="color:#0f766e;">-</div>
+            <div class="stat-label">En Sala / Confirmadas</div>
+            <div class="stat-sub">Presentes en sede</div>
+        </div>
+        <div class="stat-card atendida">
+            <div class="stat-numero" id="stat-atendidas" style="color:#2d9768;">-</div>
+            <div class="stat-label">Atendidas con Éxito</div>
+            <div class="stat-sub">Consultas completadas</div>
+        </div>
+        <div class="stat-card cancelada">
+            <div class="stat-numero" id="stat-canceladas" style="color:var(--rojo-error);">-</div>
+            <div class="stat-label">Citas Canceladas</div>
+            <div class="stat-sub">Horarios liberados</div>
+        </div>
+        <div class="stat-card inasistencia">
+            <div class="stat-numero" id="stat-inasistencias" style="color:var(--amarillo-aviso);">-</div>
+            <div class="stat-label">Inasistencias</div>
+            <div class="stat-sub" id="stat-porcentaje-inasistencia">0% del total</div>
+        </div>
+    </div>
+
+    <!-- Filtros de búsqueda (HU-10) -->
+    <div class="filtros">
+        <div class="form-group">
+            <label>Filtrar por Estado</label>
+            <select id="filtro-estado" class="form-input" onchange="filtrarCitas()">
+                <option value="">Todos los estados</option>
+                <option value="programada">Programadas</option>
+                <option value="confirmada">Confirmadas (En Sala)</option>
+                <option value="atendida">Atendidas</option>
+                <option value="inasistencia">Inasistencias</option>
+                <option value="cancelada">Canceladas</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Filtrar por Médico</label>
+            <select id="filtro-medico" class="form-input" onchange="filtrarCitas()">
+                <option value="">Todos los médicos</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Filtrar por Fecha</label>
+            <input type="date" id="filtro-fecha" class="form-input" onchange="filtrarCitas()">
+        </div>
+        <div class="form-group">
+            <label>Buscar Paciente / Doc</label>
+            <input type="text" id="filtro-busqueda" class="form-input" placeholder="Nombre o Cédula..." oninput="filtrarCitas()">
+        </div>
+        <button class="btn-tool" onclick="limpiarFiltros()" style="height:42px; margin-bottom:0;">
+            Limpiar
+        </button>
+    </div>
+
+    <!-- Tabla de Citas -->
+    <div class="tabla-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Paciente</th>
+                    <th>Documento</th>
+                    <th>Médico Asignado</th>
+                    <th>Especialidad</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                    <th>Acción Operativa</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-citas">
+                <tr><td colspan="8" style="text-align:center;color:var(--gris-texto);padding:30px;">Cargando citas...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    const token = localStorage.getItem('token');
+    const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+    if (!token || (usuario?.rol !== 'administrador' && usuario?.rol !== 'medico')) {
+        window.location.href = '/';
+    }
+
+    let todasLasCitas = [];
+
+    async function cargarReportes() {
+        try {
+            const res = await fetch('/api/admin/reportes', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            const confirmadas = todasLasCitas.filter(c => c.estado === 'confirmada').length;
+            const total = data.total || 0;
+            const inasistencias = data.inasistencias || 0;
+            const pct = total > 0 ? ((inasistencias / total) * 100).toFixed(1) : 0;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-programadas').textContent = data.programadas || 0;
+            document.getElementById('stat-confirmadas').textContent = confirmadas;
+            document.getElementById('stat-atendidas').textContent = data.atendidas || 0;
+            document.getElementById('stat-canceladas').textContent = data.canceladas || 0;
+            document.getElementById('stat-inasistencias').textContent = inasistencias;
+            document.getElementById('stat-porcentaje-inasistencia').textContent = `${pct}% tasa inasistencia`;
+
+        } catch (e) { console.error(e); }
+    }
+
+    async function cargarCitas() {
+        try {
+            const res = await fetch('/api/admin/citas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            todasLasCitas = data.citas || [];
+
+            poblarFiltroMedicos(todasLasCitas);
+            renderizarCitas(todasLasCitas);
+            cargarReportes();
+        } catch (e) { console.error(e); }
+    }
+
+    function poblarFiltroMedicos(citas) {
+        const select = document.getElementById('filtro-medico');
+        const medicosUnicos = [...new Set(citas.map(c => `${c.medico_nombre} ${c.medico_apellido}`))];
+        select.innerHTML = '<option value="">Todos los médicos</option>' + 
+            medicosUnicos.map(m => `<option value="${m}">Dr. ${m}</option>`).join('');
+    }
+
+    function formatearHora(horaStr) {
+        if (!horaStr) return '';
+        const [h, m] = horaStr.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+    }
+
+    function renderizarCitas(citas) {
+        const tbody = document.getElementById('tabla-citas');
+
+        if (citas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gris-texto);padding:30px;">No hay citas registradas bajo los filtros actuales.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = citas.map(c => `
+            <tr>
+                <td><strong>${c.paciente_nombre} ${c.paciente_apellido}</strong></td>
+                <td><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;">${c.paciente_documento || 'N/A'}</code></td>
+                <td>Dr. ${c.medico_nombre} ${c.medico_apellido}</td>
+                <td>${c.especialidad}</td>
+                <td>${c.fecha}</td>
+                <td>${formatearHora(c.hora)}</td>
+                <td><span class="badge-estado badge-${c.estado}">${c.estado}</span></td>
+                <td>
+                    <select class="btn-estado" onchange="cambiarEstado(${c.id_cita}, this.value)">
+                        <option value="">Cambiar estado...</option>
+                        <option value="confirmada" ${c.estado === 'confirmada' ? 'disabled' : ''}>🏢 Confirmar en Sala</option>
+                        <option value="atendida" ${c.estado === 'atendida' ? 'disabled' : ''}>✅ Atendida (Médico)</option>
+                        <option value="inasistencia" ${c.estado === 'inasistencia' ? 'disabled' : ''}>⚠️ Inasistencia</option>
+                        <option value="cancelada" ${c.estado === 'cancelada' ? 'disabled' : ''}>❌ Cancelar Turno</option>
+                        <option value="programada" ${c.estado === 'programada' ? 'disabled' : ''}>📅 Reprogramada</option>
+                    </select>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function cambiarEstado(id_cita, nuevo_estado) {
+        if (!nuevo_estado) return;
+        try {
+            const res = await fetch(`/api/admin/citas/${id_cita}/estado`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ estado: nuevo_estado })
+            });
+
+            if (res.ok) {
+                cargarCitas();
+            } else {
+                alert('No se pudo actualizar el estado de la cita.');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Recepción física: buscar y confirmar llegada de paciente
+    function confirmarLlegadaPaciente(e) {
+        e.preventDefault();
+        const doc = document.getElementById('input-doc-llegada').value.trim();
+        if (!doc) return;
+
+        // Buscar cita programada para este documento
+        const cita = todasLasCitas.find(c => (c.paciente_documento === doc) && (c.estado === 'programada'));
+
+        if (!cita) {
+            alert(`No se encontró cita programada para el documento: ${doc}. Revisa el número o el estado de la cita.`);
+            return;
+        }
+
+        cambiarEstado(cita.id_cita, 'confirmada');
+        alert(`¡Llegada confirmada! El paciente ${cita.paciente_nombre} ${cita.paciente_apellido} pasó a sala de espera.`);
+        document.getElementById('input-doc-llegada').value = '';
+    }
+
+    function filtrarCitas() {
+        const estado = document.getElementById('filtro-estado').value;
+        const medico = document.getElementById('filtro-medico').value;
+        const fecha = document.getElementById('filtro-fecha').value;
+        const busqueda = document.getElementById('filtro-busqueda').value.toLowerCase().trim();
+
+        let filtradas = todasLasCitas;
+        if (estado) filtradas = filtradas.filter(c => c.estado === estado);
+        if (medico) filtradas = filtradas.filter(c => `${c.medico_nombre} ${c.medico_apellido}` === medico);
+        if (fecha) filtradas = filtradas.filter(c => c.fecha === fecha);
+        if (busqueda) {
+            filtradas = filtradas.filter(c => 
+                (c.paciente_nombre && c.paciente_nombre.toLowerCase().includes(busqueda)) ||
+                (c.paciente_apellido && c.paciente_apellido.toLowerCase().includes(busqueda)) ||
+                (c.paciente_documento && c.paciente_documento.includes(busqueda))
+            );
+        }
+        renderizarCitas(filtradas);
+    }
+
+    function limpiarFiltros() {
+        document.getElementById('filtro-estado').value = '';
+        document.getElementById('filtro-medico').value = '';
+        document.getElementById('filtro-fecha').value = '';
+        document.getElementById('filtro-busqueda').value = '';
+        renderizarCitas(todasLasCitas);
+    }
+
+    // HU-12: Exportar a Excel (CSV)
+    function exportarExcel() {
+        if (todasLasCitas.length === 0) {
+            alert('No hay datos para exportar.');
+            return;
+        }
+
+        let csv = 'ID,Paciente,Documento,Telefono,Medico,Especialidad,Fecha,Hora,Estado,Motivo\n';
+        todasLasCitas.forEach(c => {
+            const row = [
+                c.id_cita,
+                `"${c.paciente_nombre} ${c.paciente_apellido}"`,
+                `"${c.paciente_documento || ''}"`,
+                `"${c.paciente_telefono || ''}"`,
+                `"Dr. ${c.medico_nombre} ${c.medico_apellido}"`,
+                `"${c.especialidad}"`,
+                c.fecha,
+                c.hora,
+                c.estado,
+                `"${c.motivo_consulta || ''}"`
+            ];
+            csv += row.join(',') + '\n';
+        });
+
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_Citas_LaTola_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // HU-12: Exportar a PDF / Impresión oficial
+    function exportarPDF() {
+        document.getElementById('print-fecha-generacion').textContent = `Generado el: ${new Date().toLocaleString('es-CO')}`;
+        window.print();
+    }
+
+    cargarCitas();
+</script>
+</body>
+</html>

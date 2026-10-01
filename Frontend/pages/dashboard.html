@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body { background: var(--gris-claro); }
+        .dashboard-header {
+            background: var(--azul-salud);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .dash-logo { color: white; font-family: 'DM Serif Display', serif; font-size: 18px; }
+        .dash-user { color: rgba(255,255,255,0.85); font-size: 14px; display: flex; align-items: center; gap: 12px; }
+        .role-switch-select {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .role-switch-select option {
+            background: #1a4a8b;
+            color: white;
+        }
+        .btn-logout {
+            background: rgba(255,255,255,0.15);
+            color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.25); }
+        .dashboard-body { padding: 40px; max-width: 900px; margin: 0 auto; }
+        .bienvenida {
+            background: white; border-radius: 14px; padding: 32px;
+            margin-bottom: 28px; box-shadow: var(--sombra);
+        }
+        .bienvenida h1 { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: 8px; }
+        .bienvenida p { color: var(--gris-texto); font-size: 14px; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .card-accion {
+            background: white; border-radius: 14px; padding: 28px;
+            box-shadow: var(--sombra); cursor: pointer;
+            transition: all 0.2s ease; text-decoration: none; color: var(--negro);
+            display: block; border: 1.5px solid transparent;
+        }
+        .card-accion:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--sombra-hover);
+            border-color: var(--azul-suave);
+        }
+        .card-icon { font-size: 32px; margin-bottom: 14px; }
+        .card-titulo { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+        .card-desc { color: var(--gris-texto); font-size: 13px; line-height: 1.5; }
+        .badge-rol {
+            display: inline-block;
+            background: var(--azul-suave); color: var(--azul-salud);
+            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+            margin-left: 8px; text-transform: capitalize;
+        }
+    </style>
+</head>
+<body>
+
+<header class="dashboard-header">
+    <div class="dash-logo">🏥 Centro de Salud La Tola</div>
+    <div class="dash-user">
+        <span id="nombre-usuario">Cargando...</span>
+        <label style="font-size: 12px; opacity: 0.9;">Cambiar rol rápido:</label>
+        <select id="switch-rol" class="role-switch-select">
+            <option value="paciente">👤 Paciente</option>
+            <option value="medico">🩺 Médico</option>
+            <option value="administrador">⚙️ Administrador</option>
+        </select>
+        <button class="btn-logout" id="btn-cerrar-sesion">Cerrar sesión</button>
+    </div>
+</header>
+
+<main class="dashboard-body">
+    <div class="bienvenida">
+        <h1>¡Bienvenido/a, <span id="nombre-bienvenida">usuario</span>! 👋
+            <span class="badge-rol" id="rol-badge">paciente</span>
+        </h1>
+        <p id="descripcion-bienvenida">Desde aquí puedes gestionar tus citas médicas en el Centro de Salud Nuestra Señora del Carmen.</p>
+    </div>
+
+    <div class="cards-grid" id="menu-cards"></div>
+</main>
+
+<script>
+    const token = localStorage.getItem('token');
+    const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
+
+    if (!token || !usuario) window.location.href = '/';
+
+    document.getElementById('nombre-usuario').textContent = `${usuario.nombre} ${usuario.apellido || ''}`;
+    document.getElementById('nombre-bienvenida').textContent = usuario.nombre;
+    document.getElementById('rol-badge').textContent = usuario.rol;
+    document.getElementById('switch-rol').value = usuario.rol;
+
+    const menusPaciente = [
+        { icon: '📅', titulo: 'Agendar cita', desc: 'Selecciona fecha, hora y médico para tu próxima cita.', href: '/agendar' },
+        { icon: '📋', titulo: 'Mis citas', desc: 'Consulta tus citas programadas, pasadas y canceladas.', href: '/mis-citas' },
+        { icon: '❌', titulo: 'Cancelar cita', desc: 'Cancela una cita que ya no puedas asistir.', href: '/mis-citas' },
+        { icon: '👤', titulo: 'Mi perfil', desc: 'Información y datos de paciente.', href: '#' },
+    ];
+
+    const menusMedico = [
+        { icon: '📅', titulo: 'Gestionar citas', desc: 'Ver y atender todas las citas del centro de salud.', href: '/admin/citas' },
+        { icon: '👥', titulo: 'Gestión de médicos y horarios', desc: 'Ver disponibilidad y turnos médicos.', href: '/admin/medicos' },
+        { icon: '📊', titulo: 'Reportes y estadísticas', desc: 'Ver estado general de atenciones.', href: '/admin/citas' },
+        { icon: '👤', titulo: 'Mi perfil', desc: 'Datos del personal médico.', href: '#' },
+    ];
+
+    const menusAdmin = [
+        { icon: '📅', titulo: 'Gestionar citas', desc: 'Ver y administrar todas las citas del centro de salud.', href: '/admin/citas' },
+        { icon: '👥', titulo: 'Gestionar médicos', desc: 'Crear médicos y definir sus horarios disponibles.', href: '/admin/medicos' },
+        { icon: '📊', titulo: 'Reportes', desc: 'Estadísticas de citas, inasistencias y atenciones.', href: '/admin/citas' },
+        { icon: '👤', titulo: 'Mi perfil', desc: 'Actualiza tus datos de acceso.', href: '#' },
+    ];
+
+    let menus = menusPaciente;
+    if (usuario.rol === 'administrador') {
+        menus = menusAdmin;
+    } else if (usuario.rol === 'medico') {
+        menus = menusMedico;
+    }
+
+    const grid = document.getElementById('menu-cards');
+    grid.innerHTML = '';
+    menus.forEach(item => {
+        grid.innerHTML += `
+            <a class="card-accion" href="${item.href}">
+                <div class="card-icon">${item.icon}</div>
+                <div class="card-titulo">${item.titulo}</div>
+                <div class="card-desc">${item.desc}</div>
+            </a>
+        `;
+    });
+
+    // Selector rápido de cambio de rol
+    document.getElementById('switch-rol').addEventListener('change', async (e) => {
+        const nuevoRol = e.target.value;
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rol: nuevoRol })
+            });
+            const data = await res.json();
+            if (res.ok && data.token) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error('Error al cambiar rol:', err);
+        }
+    });
+
+    document.getElementById('btn-cerrar-sesion').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        window.location.href = '/';
+    });
+</script>
+</body>
+</html>

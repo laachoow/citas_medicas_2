@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Cita | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body { background: var(--gris-claro); }
+        .header {
+            background: var(--azul-salud);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-logo { color: white; font-family: 'DM Serif Display', serif; font-size: 18px; }
+        .header-nav { display: flex; align-items: center; gap: 16px; }
+        .btn-volver {
+            background: rgba(255,255,255,0.15);
+            color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s; text-decoration: none;
+            display: inline-block;
+        }
+        .btn-volver:hover { background: rgba(255,255,255,0.25); }
+        .page-body { padding: 40px; max-width: 700px; margin: 0 auto; }
+        .page-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px; margin-bottom: 8px;
+        }
+        .page-subtitle { color: var(--gris-texto); font-size: 14px; margin-bottom: 32px; }
+        .card {
+            background: white; border-radius: 14px; padding: 32px;
+            box-shadow: var(--sombra); margin-bottom: 24px;
+        }
+        .card-title {
+            font-size: 16px; font-weight: 600; margin-bottom: 20px;
+            padding-bottom: 12px; border-bottom: 1.5px solid #e8eef8;
+            color: var(--azul-salud);
+        }
+        .step-indicator {
+            display: flex; gap: 8px; margin-bottom: 32px;
+        }
+        .step {
+            flex: 1; height: 4px; border-radius: 4px;
+            background: #e0e8f4; transition: background 0.3s;
+        }
+        .step.active { background: var(--azul-salud); }
+        .step.done { background: var(--azul-claro); }
+        .medico-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .medico-card {
+            border: 1.5px solid #e0e8f4; border-radius: 10px;
+            padding: 16px; cursor: pointer; transition: all 0.2s;
+        }
+        .medico-card:hover { border-color: var(--azul-salud); background: var(--azul-suave); }
+        .medico-card.selected { border-color: var(--azul-salud); background: var(--azul-suave); }
+        .medico-nombre { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .medico-especialidad { font-size: 12px; color: var(--gris-texto); }
+        .horario-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+        }
+        .horario-btn {
+            padding: 12px 10px; border: 1.5px solid #d5e2f2; border-radius: 10px;
+            background: white; cursor: pointer;
+            transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+        }
+        .horario-btn:hover {
+            border-color: var(--azul-salud); background: #f0f6ff; transform: translateY(-2px);
+        }
+        .horario-btn.selected {
+            border-color: var(--azul-salud); background: var(--azul-salud); color: white;
+            box-shadow: 0 4px 12px rgba(26, 74, 139, 0.25);
+        }
+        .horario-hora { font-size: 14px; font-weight: 600; }
+        .horario-status { font-size: 11px; color: #2d9768; font-weight: 500; }
+        .horario-btn.selected .horario-status { color: #bbf7d0; }
+        .horarios-info-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #eef7ee; border: 1px solid #c2e2c2; border-radius: 8px;
+            padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: #1a6b4a;
+        }
+        .sugerencia-fechas {
+            display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; justify-content: center;
+        }
+        .btn-fecha-sugerida {
+            background: var(--azul-suave); border: 1px solid var(--azul-salud);
+            color: var(--azul-salud); padding: 6px 12px; border-radius: 6px;
+            cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-fecha-sugerida:hover { background: var(--azul-salud); color: white; }
+        .resumen {
+            background: var(--azul-suave); border-radius: 10px;
+            padding: 20px; margin-bottom: 20px;
+        }
+        .resumen-item { display: flex; gap: 10px; margin-bottom: 8px; font-size: 14px; }
+        .resumen-label { color: var(--gris-texto); min-width: 80px; }
+        .resumen-valor { font-weight: 600; }
+        .sin-horarios {
+            text-align: center; padding: 30px 20px;
+            color: var(--gris-texto); font-size: 14px;
+        }
+        .seccion { display: none; }
+        .seccion.visible { display: block; }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-logo">🏥 Centro de Salud La Tola</div>
+    <div class="header-nav">
+        <a href="/dashboard" class="btn-volver">← Volver</a>
+    </div>
+</header>
+
+<main class="page-body">
+    <h1 class="page-title">Agendar cita médica</h1>
+    <p class="page-subtitle">Sigue los pasos para reservar tu cita.</p>
+
+    <!-- Indicador de pasos -->
+    <div class="step-indicator">
+        <div class="step active" id="step1"></div>
+        <div class="step" id="step2"></div>
+        <div class="step" id="step3"></div>
+        <div class="step" id="step4"></div>
+    </div>
+
+    <div class="alert alert-error" id="alerta" style="margin-bottom:20px;">
+        <span>⚠️</span><span id="alerta-texto"></span>
+    </div>
+    <div class="alert alert-success" id="alerta-ok" style="margin-bottom:20px;">
+        <span>✅</span><span id="alerta-ok-texto"></span>
+    </div>
+
+    <!-- Paso 1: Seleccionar médico -->
+    <div class="seccion visible" id="seccion-medico">
+        <div class="card">
+            <div class="card-title">Paso 1 — Selecciona el médico</div>
+            <div class="medico-grid" id="medico-grid">
+                <p style="color:var(--gris-texto);font-size:14px;">Cargando médicos disponibles...</p>
+            </div>
+        </div>
+        <button class="btn-primary" id="btn-siguiente-1" disabled>Siguiente →</button>
+    </div>
+
+    <!-- Paso 2: Seleccionar fecha -->
+    <div class="seccion" id="seccion-fecha">
+        <div class="card">
+            <div class="card-title">Paso 2 — Selecciona la fecha</div>
+            <div style="background:#f4f7fc; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:var(--azul-salud);">
+                🗓️ <strong>Atención médica disponible:</strong> Lunes a Sábado. Selecciona una fecha válida.
+            </div>
+            <div class="form-group">
+                <label for="fecha">Fecha de la cita <span class="obligatorio">*</span></label>
+                <input type="date" id="fecha" class="form-input">
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;">
+            <button class="btn-primary" onclick="irPaso(1)" style="background:var(--gris-texto);">← Atrás</button>
+            <button class="btn-primary" id="btn-siguiente-2">Siguiente →</button>
+        </div>
+    </div>
+
+    <!-- Paso 3: Seleccionar horario -->
+    <div class="seccion" id="seccion-horario">
+        <div class="card">
+            <div class="card-title">Paso 3 — Horarios Disponibles</div>
+            <div id="horarios-info-container"></div>
+            <div class="horario-grid" id="horario-grid">
+                <p style="color:var(--gris-texto);font-size:14px;">Selecciona una fecha primero.</p>
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;">
+            <button class="btn-primary" onclick="irPaso(2)" style="background:var(--gris-texto);">← Atrás</button>
+            <button class="btn-primary" id="btn-siguiente-3" disabled>Siguiente →</button>
+        </div>
+    </div>
+
+    <!-- Paso 4: Confirmar -->
+    <div class="seccion" id="seccion-confirmar">
+        <div class="card">
+            <div class="card-title">Paso 4 — Confirma tu cita</div>
+            <div class="resumen" id="resumen"></div>
+            <div class="form-group">
+                <label for="motivo">Motivo de consulta (opcional)</label>
+                <input type="text" id="motivo" class="form-input" placeholder="Ej: Dolor de cabeza, control rutinario...">
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;">
+            <button class="btn-primary" onclick="irPaso(3)" style="background:var(--gris-texto);">← Atrás</button>
+            <button class="btn-primary" id="btn-confirmar">
+                <span class="btn-text">✅ Confirmar cita</span>
+                <div class="spinner"></div>
+            </button>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/';
+
+    let medicoSeleccionado = null;
+    let horarioSeleccionado = null;
+    let fechaSeleccionada = null;
+
+    // Establecer fecha mínima (hoy) y sugerir la fecha actual
+    const fechaActual = new Date();
+    const hoyStr = `${fechaActual.getFullYear()}-${String(fechaActual.getMonth()+1).padStart(2,'0')}-${String(fechaActual.getDate()).padStart(2,'0')}`;
+    const inputFecha = document.getElementById('fecha');
+    inputFecha.min = hoyStr;
+    inputFecha.value = hoyStr;
+
+    function formatearHora(horaStr) {
+        if (!horaStr) return '';
+        const [h, m] = horaStr.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+    }
+
+    // Cargar médicos
+    async function cargarMedicos() {
+        try {
+            const res = await fetch('/api/citas/medicos', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const grid = document.getElementById('medico-grid');
+
+            if (!data.medicos || data.medicos.length === 0) {
+                grid.innerHTML = '<p style="color:var(--gris-texto);font-size:14px;">No hay médicos disponibles.</p>';
+                return;
+            }
+
+            grid.innerHTML = data.medicos.map(m => `
+                <div class="medico-card" onclick="seleccionarMedico(${m.id_medico}, '${m.nombre} ${m.apellido}', '${m.especialidad}')">
+                    <div class="medico-nombre">Dr. ${m.nombre} ${m.apellido}</div>
+                    <div class="medico-especialidad">${m.especialidad}</div>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function seleccionarMedico(id, nombre, especialidad) {
+        medicoSeleccionado = { id, nombre, especialidad };
+        document.querySelectorAll('.medico-card').forEach(c => c.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        document.getElementById('btn-siguiente-1').disabled = false;
+    }
+
+    // Cargar horarios estrictamente disponibles
+    async function cargarHorarios() {
+        fechaSeleccionada = document.getElementById('fecha').value;
+        if (!fechaSeleccionada) return;
+
+        const grid = document.getElementById('horario-grid');
+        const info = document.getElementById('horarios-info-container');
+        document.getElementById('btn-siguiente-3').disabled = true;
+        info.innerHTML = '';
+        grid.innerHTML = '<p style="color:var(--gris-texto);font-size:14px;">Buscando turnos disponibles...</p>';
+
+        try {
+            const res = await fetch(`/api/citas/horarios?id_medico=${medicoSeleccionado.id}&fecha=${fechaSeleccionada}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const horarios = data.horarios || [];
+
+            if (horarios.length === 0) {
+                info.innerHTML = '';
+                grid.innerHTML = `
+                    <div class="sin-horarios" style="grid-column: 1 / -1;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">📅</div>
+                        <strong>No hay horarios disponibles para esta fecha.</strong>
+                        <p style="margin-top:6px; color:var(--gris-texto); font-size:13px;">
+                            Todos los turnos de este día ya están reservados o no hay servicio para el día seleccionado.
+                        </p>
+                        <div style="margin-top:16px;">
+                            <span style="font-size:12px; font-weight:600; color:var(--azul-salud);">Selecciona una fecha próxima recomendada:</span>
+                            <div class="sugerencia-fechas" id="fechas-sugeridas"></div>
+                        </div>
+                    </div>
+                `;
+
+                // Fechas próximas sugeridas
+                const sugeridasDiv = document.getElementById('fechas-sugeridas');
+                const [y, m, d] = fechaSeleccionada.split('-').map(Number);
+                const baseDate = new Date(y, m - 1, d);
+                for (let i = 1; i <= 6; i++) {
+                    const nextDate = new Date(baseDate);
+                    nextDate.setDate(baseDate.getDate() + i);
+                    if (nextDate.getDay() !== 0) { // Omitir domingos
+                        const yyyy = nextDate.getFullYear();
+                        const mm = String(nextDate.getMonth() + 1).padStart(2, '0');
+                        const dd = String(nextDate.getDate()).padStart(2, '0');
+                        const iso = `${yyyy}-${mm}-${dd}`;
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'btn-fecha-sugerida';
+                        btn.textContent = nextDate.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' });
+                        btn.onclick = () => {
+                            document.getElementById('fecha').value = iso;
+                            fechaSeleccionada = iso;
+                            cargarHorarios();
+                        };
+                        sugeridasDiv.appendChild(btn);
+                    }
+                }
+                return;
+            }
+
+            const nombresDias = {
+                lunes: 'Lunes', martes: 'Martes', miercoles: 'Miércoles',
+                jueves: 'Jueves', viernes: 'Viernes', sabado: 'Sábado', domingo: 'Domingo'
+            };
+            const diaNombre = data.dia_semana ? (nombresDias[data.dia_semana] || data.dia_semana) : '';
+
+            info.innerHTML = `
+                <div class="horarios-info-bar">
+                    <span>🟢 <strong>${horarios.length} turnos disponibles</strong> (${diaNombre}, ${fechaSeleccionada})</span>
+                    <span style="font-size:11px; opacity:0.9;">Solo horarios libres</span>
+                </div>
+            `;
+
+            grid.innerHTML = horarios.map(h => `
+                <button type="button" class="horario-btn" onclick="seleccionarHorario(${h.id_horario}, '${h.hora_inicio}')">
+                    <span class="horario-hora">${formatearHora(h.hora_inicio)}</span>
+                    <span class="horario-status">🟢 Disponible</span>
+                </button>
+            `).join('');
+
+        } catch (e) {
+            console.error(e);
+            grid.innerHTML = '<p style="color:var(--rojo-error);">Error al cargar horarios.</p>';
+        }
+    }
+
+    function seleccionarHorario(id, hora) {
+        horarioSeleccionado = { id, hora };
+        document.querySelectorAll('.horario-btn').forEach(b => b.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        document.getElementById('btn-siguiente-3').disabled = false;
+    }
+
+    // Navegar entre pasos
+    function irPaso(paso) {
+        document.querySelectorAll('.seccion').forEach(s => s.classList.remove('visible'));
+        document.querySelectorAll('.step').forEach((s, i) => {
+            s.classList.remove('active', 'done');
+            if (i < paso - 1) s.classList.add('done');
+            if (i === paso - 1) s.classList.add('active');
+        });
+
+        const secciones = ['seccion-medico', 'seccion-fecha', 'seccion-horario', 'seccion-confirmar'];
+        document.getElementById(secciones[paso - 1]).classList.add('visible');
+    }
+
+    document.getElementById('btn-siguiente-1').addEventListener('click', () => irPaso(2));
+
+    document.getElementById('btn-siguiente-2').addEventListener('click', () => {
+        fechaSeleccionada = document.getElementById('fecha').value;
+        if (!fechaSeleccionada) {
+            alert('Selecciona una fecha.');
+            return;
+        }
+        irPaso(3);
+        cargarHorarios();
+    });
+
+    document.getElementById('btn-siguiente-3').addEventListener('click', () => {
+        irPaso(4);
+        document.getElementById('resumen').innerHTML = `
+            <div class="resumen-item"><span class="resumen-label">Médico:</span><span class="resumen-valor">Dr. ${medicoSeleccionado.nombre}</span></div>
+            <div class="resumen-item"><span class="resumen-label">Especialidad:</span><span class="resumen-valor">${medicoSeleccionado.especialidad}</span></div>
+            <div class="resumen-item"><span class="resumen-label">Fecha:</span><span class="resumen-valor">${fechaSeleccionada}</span></div>
+            <div class="resumen-item"><span class="resumen-label">Hora:</span><span class="resumen-valor">${formatearHora(horarioSeleccionado.hora)}</span></div>
+        `;
+    });
+
+    document.getElementById('btn-confirmar').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-confirmar');
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/citas/agendar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id_medico: medicoSeleccionado.id,
+                    id_horario: horarioSeleccionado.id,
+                    fecha: fechaSeleccionada,
+                    motivo_consulta: document.getElementById('motivo').value.trim()
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                document.getElementById('alerta').classList.add('visible');
+                document.getElementById('alerta-texto').textContent = data.error || 'Error al agendar la cita.';
+                return;
+            }
+
+            // Mostrar pantalla de éxito y comprobante con opción de recordatorio por WhatsApp (HU-08 / HU-09)
+            document.querySelectorAll('.seccion').forEach(s => s.classList.remove('visible'));
+            document.getElementById('step4').classList.add('done');
+
+            const idCita = data.id_cita || Math.floor(1000 + Math.random() * 9000);
+            const horaFormateada = formatearHora(horarioSeleccionado.hora);
+            const msgWhatsApp = encodeURIComponent(
+                `🏥 *Centro de Salud Nuestra Señora del Carmen - La Tola Nariño*\n\n` +
+                `✅ *Confirmación de Cita Médica*\n` +
+                `📌 *Folio:* #CITA-${idCita}\n` +
+                `👨‍⚕️ *Profesional:* Dr. ${medicoSeleccionado.nombre}\n` +
+                `🩺 *Especialidad:* ${medicoSeleccionado.especialidad}\n` +
+                `📅 *Fecha:* ${fechaSeleccionada}\n` +
+                `⏰ *Hora:* ${horaFormateada}\n` +
+                `📍 *Lugar:* Sede Principal La Tola\n\n` +
+                `⚠️ *Nota:* Por favor presentarse 15 minutos antes con documento de identidad.`
+            );
+
+            const container = document.querySelector('.page-body');
+            const comprobanteHtml = `
+                <div class="card" style="border-top: 4px solid #2d9768; text-align:center; padding:36px 28px;">
+                    <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+                    <h2 style="font-family:'DM Serif Display',serif; font-size:24px; color:#1a6b4a; margin-bottom:8px;">
+                        ¡Cita Médica Reservada con Éxito!
+                    </h2>
+                    <p style="color:var(--gris-texto); font-size:14px; margin-bottom:24px;">
+                        Tu turno ha sido registrado en el sistema del Centro de Salud Nuestra Señora del Carmen.
+                    </p>
+
+                    <div style="background:#f8fafc; border:1.5px dashed #cbd5e1; border-radius:12px; padding:20px; text-align:left; max-width:480px; margin:0 auto 24px;">
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">
+                            <span style="font-size:12px; color:var(--gris-texto);">Comprobante Oficial:</span>
+                            <span style="font-weight:700; color:var(--azul-salud);">#CITA-${idCita}</span>
+                        </div>
+                        <div style="font-size:14px; line-height:1.7;">
+                            <div><strong>Profesional:</strong> Dr. ${medicoSeleccionado.nombre}</div>
+                            <div><strong>Especialidad:</strong> ${medicoSeleccionado.especialidad}</div>
+                            <div><strong>Fecha:</strong> ${fechaSeleccionada}</div>
+                            <div><strong>Hora asignada:</strong> ${horaFormateada}</div>
+                            <div><strong>Sede:</strong> Centro de Salud La Tola, Nariño</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                        <a href="https://api.whatsapp.com/send?text=${msgWhatsApp}" target="_blank" class="btn-primary" style="background:#25D366; display:inline-flex; align-items:center; gap:8px; text-decoration:none;">
+                            <span>📱</span> Enviar recordatorio por WhatsApp
+                        </a>
+                        <button onclick="window.print()" class="btn-primary" style="background:var(--azul-salud); display:inline-flex; align-items:center; gap:8px;">
+                            <span>🖨️</span> Imprimir Comprobante
+                        </button>
+                        <a href="/mis-citas" class="btn-volver" style="background:var(--gris-claro); color:var(--negro); border:1.5px solid #d0d9e8; padding:12px 20px; font-weight:600;">
+                            Ver Mis Citas →
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = comprobanteHtml;
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('alerta').classList.add('visible');
+            document.getElementById('alerta-texto').textContent = 'Error de conexión con el servidor.';
+        } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    });
+
+    cargarMedicos();
+</script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Citas | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        body { background: var(--gris-claro); }
+        .header {
+            background: var(--azul-salud);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-logo { color: white; font-family: 'DM Serif Display', serif; font-size: 18px; }
+        .btn-volver {
+            background: rgba(255,255,255,0.15);
+            color: white; border: none; padding: 8px 16px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s; text-decoration: none;
+            display: inline-block;
+        }
+        .btn-volver:hover { background: rgba(255,255,255,0.25); }
+        .page-body { padding: 40px; max-width: 800px; margin: 0 auto; }
+        .page-title { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 8px; }
+        .page-subtitle { color: var(--gris-texto); font-size: 14px; margin-bottom: 32px; }
+        .cita-card {
+            background: white; border-radius: 14px; padding: 24px;
+            box-shadow: var(--sombra); margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-left: 4px solid var(--azul-salud);
+        }
+        .cita-card.cancelada { border-left-color: var(--rojo-error); opacity: 0.7; }
+        .cita-card.atendida { border-left-color: #2d9768; }
+        .cita-card.inasistencia { border-left-color: var(--amarillo-aviso); }
+        .cita-info { flex: 1; }
+        .cita-medico { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .cita-especialidad { color: var(--gris-texto); font-size: 13px; margin-bottom: 12px; }
+        .cita-detalles { display: flex; gap: 20px; font-size: 13px; }
+        .cita-detalle { display: flex; align-items: center; gap: 6px; color: var(--gris-texto); }
+        .cita-acciones { display: flex; flex-direction: column; gap: 8px; margin-left: 20px; }
+        .btn-cancelar {
+            padding: 8px 16px; border: 1.5px solid var(--rojo-error);
+            color: var(--rojo-error); background: white; border-radius: 8px;
+            cursor: pointer; font-size: 12px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-cancelar:hover { background: var(--rojo-error); color: white; }
+        .btn-reprogramar {
+            padding: 8px 16px; border: 1.5px solid var(--azul-salud);
+            color: var(--azul-salud); background: white; border-radius: 8px;
+            cursor: pointer; font-size: 12px; font-weight: 600;
+            font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-reprogramar:hover { background: var(--azul-salud); color: white; }
+        .badge-estado {
+            display: inline-block; padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; margin-bottom: 8px;
+        }
+        .badge-programada { background: var(--azul-suave); color: var(--azul-salud); }
+        .badge-atendida { background: #e8f5ee; color: #1a6b4a; }
+        .badge-cancelada { background: #fff0f0; color: var(--rojo-error); }
+        .badge-inasistencia { background: #fff8e8; color: var(--amarillo-aviso); }
+        .sin-citas {
+            text-align: center; padding: 60px 20px;
+            color: var(--gris-texto);
+        }
+        .sin-citas-icon { font-size: 48px; margin-bottom: 16px; }
+        .sin-citas h3 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 8px; color: var(--negro); }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal {
+            background: white; border-radius: 14px; padding: 32px;
+            max-width: 440px; width: 90%; box-shadow: var(--sombra-hover);
+        }
+        .modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 8px; }
+        .modal-subtitle { color: var(--gris-texto); font-size: 14px; margin-bottom: 24px; }
+        .modal-acciones { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-secundario {
+            flex: 1; padding: 12px; border: 1.5px solid #d0d9e8;
+            background: white; border-radius: 8px; cursor: pointer;
+            font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-secundario:hover { background: var(--gris-claro); }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-logo">🏥 Centro de Salud La Tola</div>
+    <a href="/dashboard" class="btn-volver">← Volver</a>
+</header>
+
+<main class="page-body">
+    <h1 class="page-title">Mis citas médicas</h1>
+    <p class="page-subtitle">Aquí puedes ver, cancelar o reprogramar tus citas.</p>
+
+    <div class="alert alert-success" id="alerta-ok" style="margin-bottom:20px;">
+        <span>✅</span><span id="alerta-ok-texto"></span>
+    </div>
+    <div class="alert alert-error" id="alerta-error" style="margin-bottom:20px;">
+        <span>⚠️</span><span id="alerta-error-texto"></span>
+    </div>
+
+    <div id="lista-citas">
+        <p style="color:var(--gris-texto);font-size:14px;">Cargando citas...</p>
+    </div>
+</main>
+
+<!-- Modal cancelar -->
+<div class="modal-overlay" id="modal-cancelar">
+    <div class="modal">
+        <div class="modal-title">¿Cancelar esta cita?</div>
+        <div class="modal-subtitle">Esta acción no se puede deshacer. El horario quedará disponible para otros pacientes.</div>
+        <div class="modal-acciones">
+            <button class="btn-secundario" onclick="cerrarModal('modal-cancelar')">No, mantener</button>
+            <button class="btn-primary" id="btn-confirmar-cancelar" style="flex:1;">
+                <span class="btn-text">Sí, cancelar</span>
+                <div class="spinner"></div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/';
+
+    let citaIdSeleccionada = null;
+
+    async function cargarCitas() {
+        try {
+            const res = await fetch('/api/citas/mis-citas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const lista = document.getElementById('lista-citas');
+
+            if (data.citas.length === 0) {
+                lista.innerHTML = `
+                    <div class="sin-citas">
+                        <div class="sin-citas-icon">📅</div>
+                        <h3>No tienes citas agendadas</h3>
+                        <p>Agenda tu primera cita médica fácilmente.</p>
+                        <a href="/agendar" class="btn-primary" style="display:inline-block;margin-top:20px;text-decoration:none;padding:12px 24px;">
+                            Agendar cita
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            lista.innerHTML = data.citas.map(c => `
+                <div class="cita-card ${c.estado}">
+                    <div class="cita-info">
+                        <span class="badge-estado badge-${c.estado}">${c.estado.charAt(0).toUpperCase() + c.estado.slice(1)}</span>
+                        <div class="cita-medico">Dr. ${c.medico_nombre} ${c.medico_apellido}</div>
+                        <div class="cita-especialidad">${c.especialidad}</div>
+                        <div class="cita-detalles">
+                            <div class="cita-detalle">📅 ${c.fecha}</div>
+                            <div class="cita-detalle">🕐 ${c.hora.substring(0,5)}</div>
+                            ${c.motivo_consulta ? `<div class="cita-detalle">📝 ${c.motivo_consulta}</div>` : ''}
+                        </div>
+                    </div>
+                    ${c.estado === 'programada' ? `
+                    <div class="cita-acciones">
+                        <a href="/agendar?reprogramar=${c.id_cita}" class="btn-reprogramar">Reprogramar</a>
+                        <button class="btn-cancelar" onclick="abrirModalCancelar(${c.id_cita})">Cancelar</button>
+                    </div>` : ''}
+                </div>
+            `).join('');
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function abrirModalCancelar(id) {
+        citaIdSeleccionada = id;
+        document.getElementById('modal-cancelar').classList.add('visible');
+    }
+
+    function cerrarModal(id) {
+        document.getElementById(id).classList.remove('visible');
+    }
+
+    document.getElementById('btn-confirmar-cancelar').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-confirmar-cancelar');
+        btn.classList.add('loading');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/citas/cancelar/${citaIdSeleccionada}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            cerrarModal('modal-cancelar');
+
+            if (!res.ok) {
+                document.getElementById('alerta-error').className = 'alert alert-error visible';
+                document.getElementById('alerta-error-texto').textContent = data.error;
+                return;
+            }
+
+            document.getElementById('alerta-ok').className = 'alert alert-success visible';
+            document.getElementById('alerta-ok-texto').textContent = 'Cita cancelada exitosamente.';
+            cargarCitas();
+
+        } catch (e) {
+            console.error(e);
+        } finally {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    });
+
+    cargarCitas();
+</script>
+</body>
+</html>

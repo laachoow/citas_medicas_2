@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro | Centro de Salud La Tola</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .auth-panel-right {
+            overflow-y: auto;
+            padding: 40px;
+        }
+        .auth-form-container {
+            max-width: 480px;
+        }
+        .terminos {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .terminos input[type="checkbox"] {
+            margin-top: 2px;
+            accent-color: var(--azul-salud);
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .terminos label {
+            font-size: 13px;
+            color: var(--gris-texto);
+            line-height: 1.5;
+            cursor: pointer;
+        }
+        .terminos label a {
+            color: var(--azul-salud);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .demo-notice {
+            background: #eef7ee;
+            border: 1px solid #c2e2c2;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #1a6b4a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+
+    <div class="auth-panel-left">
+        <div class="auth-logo">
+            <div class="auth-logo-icon">🏥</div>
+            <div class="auth-logo-text">
+                Centro de Salud<br>
+                <strong>Nuestra Señora del Carmen</strong>
+            </div>
+        </div>
+
+        <h1 class="auth-hero-title">
+            Crea tu<br>
+            <em>cuenta</em> y<br>
+            agenda hoy.
+        </h1>
+
+        <p class="auth-hero-subtitle">
+            Regístrate eligiendo el rol con el que deseas participar en el sistema.
+            Sin requisitos de contraseñas por ahora.
+        </p>
+
+        <div class="auth-features">
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Elige tu rol: Paciente, Médico o Administrador
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Registro rápido, solo datos básicos
+            </div>
+            <div class="auth-feature">
+                <div class="auth-feature-dot"></div>
+                Acceso desde cualquier dispositivo
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-panel-right">
+        <div class="auth-form-container">
+
+            <div class="auth-form-header">
+                <h2 class="auth-form-title">Crear nueva cuenta</h2>
+                <p class="auth-form-subtitle">
+                    ¿Ya tienes cuenta?
+                    <a href="/">Inicia sesión aquí</a>
+                </p>
+            </div>
+
+            <div class="demo-notice">
+                <span>🔓</span>
+                <span><strong>Modo ágil activo:</strong> Registro instantáneo sin contraseña requerida.</span>
+            </div>
+
+            <div class="alert alert-error" id="alerta">
+                <span>⚠️</span>
+                <span id="alerta-texto"></span>
+            </div>
+            <div class="alert alert-success" id="alerta-ok">
+                <span>✅</span>
+                <span id="alerta-ok-texto"></span>
+            </div>
+
+            <form id="form-registro" novalidate>
+
+                <div class="form-group">
+                    <label for="rol">Rol en el Sistema <span class="obligatorio">*</span></label>
+                    <select id="rol" class="form-input">
+                        <option value="paciente">👤 Paciente (Agendar y ver citas)</option>
+                        <option value="medico">🩺 Médico (Atención y horarios)</option>
+                        <option value="administrador">⚙️ Administrador (Gestión general)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre <span class="obligatorio">*</span></label>
+                        <input type="text" id="nombre" class="form-input" placeholder="Carlos">
+                        <span class="field-error" id="error-nombre"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellido">Apellido <span class="obligatorio">*</span></label>
+                        <input type="text" id="apellido" class="form-input" placeholder="Ortiz">
+                        <span class="field-error" id="error-apellido"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tipo_documento">Tipo doc. <span class="obligatorio">*</span></label>
+                        <select id="tipo_documento" class="form-input">
+                            <option value="">Selecciona</option>
+                            <option value="CC" selected>Cédula de Ciudadanía</option>
+                            <option value="TI">Tarjeta de Identidad</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="PA">Pasaporte</option>
+                        </select>
+                        <span class="field-error" id="error-tipo_documento"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="numero_documento">Número doc. <span class="obligatorio">*</span></label>
+                        <input type="text" id="numero_documento" class="form-input" placeholder="1234567890">
+                        <span class="field-error" id="error-numero_documento"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono / Celular</label>
+                    <input type="tel" id="telefono" class="form-input" placeholder="3001234567">
+                </div>
+
+                <div class="form-group">
+                    <label for="correo">Correo electrónico <span class="obligatorio">*</span></label>
+                    <input type="email" id="correo" class="form-input" placeholder="tucorreo@ejemplo.com">
+                    <span class="field-error" id="error-correo"></span>
+                </div>
+
+                <div class="terminos">
+                    <input type="checkbox" id="acepta_terminos" checked>
+                    <label for="acepta_terminos">
+                        Acepto el tratamiento de mis datos personales conforme a la
+                        <a href="#">Ley 1581 de 2012</a> de protección de datos de Colombia.
+                    </label>
+                </div>
+                <span class="field-error" id="error-terminos"></span>
+
+                <button type="submit" class="btn-primary" id="btn-registro">
+                    <span class="btn-text">Crear cuenta e ingresar</span>
+                    <div class="spinner"></div>
+                </button>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<script src="../js/registro.js"></script>
+</body>
+</html>
